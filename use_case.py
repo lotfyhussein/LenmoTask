@@ -6,7 +6,7 @@ Borrower = User('Borrower', 'Lotfy', 0)
 Investor =	User('Investor', 'Ahmed', 20000)
 #######################################################
 # Intiating A Loan Request & an Offer for that Request
-Loan_Request = LoanRequest(Borrower.Get_UserName(), 5000, 6)
+Loan_Request = LoanRequest(Borrower.Get_UserName(), 5000, 6) 
 Offer = Offer(Loan_Request.ID, Investor.Get_UserName(), 5000, 6, 15)
 #######################################################
 # Adding the Request to the Borrower's list of requests
