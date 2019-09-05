@@ -30,10 +30,14 @@ print('---------------')
 time.sleep(3)   
 
 
-Loan_Payments = Loan.Schedule_Loan_Payments()
+Loan_Payments = Loan.Get_Loan_Payments()
 
 for i in range (len(Loan_Payments)):
 	time.sleep(3)
 	print('Payment with below details was paid:\n')   
 	print (Loan_Payments[i])
 	print('---------------')
+Loan.Update_Status('Completed')
+
+print ('Current Status of the Loan\n')
+print (Loan)

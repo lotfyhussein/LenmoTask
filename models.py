@@ -1,4 +1,7 @@
 import uuid
+import datetime
+import calendar
+
 class User:
     def __init__(self, Type, Username, Balance):
         self.Type = Type
@@ -6,6 +9,7 @@ class User:
        	self.Balance = Balance
         self.LoanRequests = []
         self.Offers = []
+        self.Loans = []
 
     def Add_Loan_Request(self, LoanRequest):
     	if self.Type == 'Borrower':
@@ -20,19 +24,24 @@ class User:
     			raise Exception('Insufficient Funds')
     	else:
     		raise Exception('a Borrower Cannot perform this request')
-
-
+    def Add_Loan(self, Loan):
+        self.Loans.append(Loan)
     def Get_User_Type(self):
     	return self.Type
-
     def Get_UserName(self):
    		return str(self.Username)
-
+    def Get_User_Loan_Requests(self):
+        if self.Type == 'Borrower':
+            return self.LoanRequests
+        else:
+            raise Exception('an Investor Cannot perform this request')
+    def Get_User_Offers(self):
+        if self.Type == 'Investor':
+            return self.Offers
+        else:
+            raise Exception('a Borrower Cannot perform this request')
     def Get_User_Loans(self):
-    	if self.Type == 'Borrower':
-    		return self.LoanRequests
-    	else:
-    		return self.Offers
+        return self.Loans
 
 class LoanRequest:
     def __init__(self, Borrower, Amount, Period):
@@ -40,13 +49,12 @@ class LoanRequest:
         self.Borrower = Borrower	
         self.Amount = Amount
         self.Period = Period	
-    def getAmount(self):
+    def Get_Amount(self):
     	return self.Amount
-    def getPeriod(self):
+    def Get_Period(self):
     	return self.Period
     def __str__(self):
-    	return "Loan_Request_ID: {},\nBorrower: {},\nAmount: {},\nPeriod: {}\n".format(self.ID, self.Borrower, self.Amount,self.Period)
-
+    	return "Loan_Request_ID: {},\nBorrower: {},\nAmount: ${},\nPeriod: {}\n".format(self.ID, self.Borrower, self.Amount,self.Period)
 
 class Offer:
     def __init__(self, Loan_Request_ID, Investor, Amount, Period, Interest):
@@ -57,16 +65,16 @@ class Offer:
         self.Period = Period		
         self.Interest = Interest
         self.Lenmo_Fees = 3
-    def get_Amount(self):
+    def Get_Amount(self):
     	return self.Amount
-    def get_Period(self):
+    def Get_Period(self):
     	return self.Period
-    def get_Interest(self):
+    def Get_Interest(self):
     	return self.Interest
-    def get_Investor(self):
+    def Get_Investor(self):
     	return self.Investor
     def __str__(self):
-    	return"Offer_ID: {},\nLoan_Request_ID: {},\nInvestor: {},\nAmount: {},\nPeriod: {},\nInterest: {}\n".format(self.ID, self.Loan_Request_ID, self.Investor, self.Amount,self.Period, self.Interest)
+    	return"Offer_ID: {},\nLoan_Request_ID: {},\nInvestor: {},\nAmount: ${},\nPeriod: {},\nInterest: {}%\n".format(self.ID, self.Loan_Request_ID, self.Investor, self.Amount,self.Period, self.Interest)
 
 class Loan:
     def __init__(self,Loan_Request, Offer, Status):
@@ -79,18 +87,29 @@ class Loan:
         self.Period = Offer.Period		
         self.Interest = Offer.Interest 
         self.Status = Status
+        self.Loan_Payments = []
+        self.Schedule_Loan_Payments()
     def Schedule_Loan_Payments(self):
-        Loan_Payments = []
-        Todays_Date = 1 #Assume it's January
+        Todays_Date = datetime.date.today()
         for i in range (self.Period):
-            Loan_Payments.append(LoanPayment(self, Todays_Date + 1))
-            Todays_Date+=1
+            self.Loan_Payments.append(LoanPayment(self, Todays_Date))
+            Todays_Date = self.Add_Months(Todays_Date, 1)
             
-        return Loan_Payments
+        return self.Loan_Payments
+    def Add_Months(self,sourcedate, months):
+        month = sourcedate.month - 1 + months
+        year = sourcedate.year + month // 12
+        month = month % 12 + 1
+        day = min(sourcedate.day, calendar.monthrange(year,month)[1])
+        return datetime.date(year, month, day)
     def Get_Status(self):
     	return self.Status
+    def Get_Loan_Payments(self):
+        return self.Loan_Payments
+    def Update_Status(self, Status):
+        self.Status = Status
     def __str__(self):
-    	return"Loan_ID: {},\nOffer_ID: {},\nLoan_Request_ID: {},\nInvestor: {},\nBorrower: {},\nAmount: {},\nPeriod: {},\nInterest: {},\nStatus: {}\n".format(self.ID,self.Offer_ID, self.Loan_Request_ID, self.Investor, self.Borrower, self.Amount,self.Period, self.Interest, self.Status)
+    	return"Loan_ID: {},\nOffer_ID: {},\nLoan_Request_ID: {},\nInvestor: {},\nBorrower: {},\nAmount: ${},\nPeriod: {},\nInterest: {}%,\nStatus: {}\n".format(self.ID,self.Offer_ID, self.Loan_Request_ID, self.Investor, self.Borrower, self.Amount,self.Period, self.Interest, self.Status)
 
 
 class LoanPayment:
@@ -98,10 +117,11 @@ class LoanPayment:
         self.ID = uuid.uuid4()
         self.Loan = Loan
         self.Due_Date = Due_Date
+        self.Amount = round((Loan.Amount/Loan.Period) + (Loan.Interest/(100*12)) * (Loan.Amount))
     def Get_Due_Date(self):
         return self.Due_Date
     def __str__(self):
-        return"Payment_ID: {},\nLoan_ID: {},\nInvestor: {},\nBorrower: {},\nDue Date: {}\n".format(self.ID, self.Loan.ID, self.Loan.Investor, self.Loan.Borrower, self.Due_Date)
+        return"Payment_ID: {},\nLoan_ID: {},\nInvestor: {},\nBorrower: {},\nAmount: ${},\nDue Date: {}\n".format(self.ID, self.Loan.ID, self.Loan.Investor, self.Loan.Borrower, self.Amount,self.Due_Date)
 
 
 
